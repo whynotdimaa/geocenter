@@ -1,18 +1,14 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 
-
+# Враховуємо, що settings.py лежить у backend/config/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-import os
-
+# --- GDAL/GEOS Налаштування для Windows (Ваші шляхи) ---
 if os.name == 'nt':
-
     OSGEO4W_ROOT = r"C:\Users\dmytr\AppData\Local\Programs\OSGeo4W"
-
     os.environ['PATH'] = os.path.join(OSGEO4W_ROOT, 'bin') + os.pathsep + os.environ['PATH']
-
     GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, 'bin', 'gdal312.dll')
     GEOS_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, 'bin', 'geos_c.dll')
 
@@ -29,10 +25,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'users',
-    'news',
+    'locations',
     'rest_framework',
     'rest_framework_gis',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist', # Додано для коректного Logout
     'corsheaders',
     'drf_spectacular',
 ]
@@ -56,7 +53,6 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
