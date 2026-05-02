@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from .models import NewsPoint
+from .serializers import NewsPointSerializer
 
-# Create your views here.
+class NewsPointViewSet(viewsets.ModelViewSet):
+    queryset = NewsPoint.objects.all().order_by('-created_at')
+    serializer_class = NewsPointSerializer
