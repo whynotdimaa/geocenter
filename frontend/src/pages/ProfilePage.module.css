@@ -1,0 +1,131 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 24px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.back {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.back:hover { text-decoration: underline; }
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.msg {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.msgOk { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
+.msgErr { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.subTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding-top: 4px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.input, .textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus, .textarea:focus { border-color: var(--color-primary); }
+
+.inputDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textarea { resize: vertical; }
+
+.btn {
+  align-self: flex-start;
+  padding: 9px 20px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.btn:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.logoutBtn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  font-size: 13px;
+  text-decoration: underline;
+  padding: 0;
+}

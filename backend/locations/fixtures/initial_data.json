@@ -1,0 +1,7 @@
+[
+  {"model": "locations.category", "pk": 1, "fields": {"name": "Природа", "slug": "nature", "description": "Природні об'єкти", "color": "#16a34a", "icon": "🌿"}},
+  {"model": "locations.category", "pk": 2, "fields": {"name": "Інфраструктура", "slug": "infrastructure", "description": "Інфраструктурні об'єкти", "color": "#2563eb", "icon": "🏗️"}},
+  {"model": "locations.category", "pk": 3, "fields": {"name": "Культура", "slug": "culture", "description": "Культурні пам'ятки", "color": "#9333ea", "icon": "🏛️"}},
+  {"model": "locations.category", "pk": 4, "fields": {"name": "Небезпека", "slug": "danger", "description": "Небезпечні зони", "color": "#dc2626", "icon": "⚠️"}},
+  {"model": "locations.category", "pk": 5, "fields": {"name": "Їжа", "slug": "food", "description": "Кафе та ресторани", "color": "#ea580c", "icon": "🍕"}}
+]

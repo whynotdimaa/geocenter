@@ -20,7 +20,11 @@ from .filters import LocationFilter
 from .permissions import IsOwnerOrReadOnly
 from django.contrib.gis.geos import Polygon
 
-class LocationViewSet(viewsets.ModelViewSet):
+from analytics.views import TrackViewMixin
+
+
+
+class LocationViewSet(TrackViewMixin, viewsets.ModelViewSet):
     """
     CRUD для локацій + кастомні дії: nearby, bbox, export.
 
@@ -200,6 +204,11 @@ class LocationViewSet(viewsets.ModelViewSet):
             'errors': errors
         }, status=status.HTTP_201_CREATED if created else status.HTTP_400_BAD_REQUEST)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.track(request, instance)  # логуємо перегляд
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
