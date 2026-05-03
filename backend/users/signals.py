@@ -5,7 +5,7 @@ from .models import User, UserProfile
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    """Автоматично створює UserProfile при реєстрації нового користувача."""
+    """Створює UserProfile тільки при першій реєстрації."""
     if created:
         UserProfile.objects.create(user=instance)
 

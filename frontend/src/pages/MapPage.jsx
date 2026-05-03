@@ -42,20 +42,26 @@ export default function MapPage() {
 
   const mapRef = useRef()
 
-  const fetchLocations = async () => {
-    setLoading(true)
-    try {
-      const params = {}
-      if (search) params.search = search
-      if (selectedCategory) params.category = selectedCategory
-      const { data } = await locationsApi.list(params)
-      setLocations(data.results || data)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+  const fetchLocations = async (signal) => {
+  setLoading(true)
+  try {
+    const params = {}
+    if (search) params.search = search
+    if (selectedCategory) params.category = selectedCategory
+    const { data } = await locationsApi.list(params, signal)
+    setLocations(data.results || data)
+  } catch (e) {
+    if (e.name !== 'CanceledError') console.error(e)
+  } finally {
+    setLoading(false)
   }
+}
+
+useEffect(() => {
+  const controller = new AbortController()
+  const t = setTimeout(() => fetchLocations(controller.signal), 300)
+  return () => { clearTimeout(t); controller.abort() }
+}, [search, selectedCategory])
 
   const fetchCategories = async () => {
     try {

@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-
+from django.db.models import Q
 from locations.models import Location
 from .models import Collection, CollectionMember
 from .serializers import (
@@ -41,20 +41,19 @@ class CollectionViewSet(viewsets.ModelViewSet):
     ordering_fields = ('created_at', 'name')
 
     def get_queryset(self):
-        """
-        Авторизований бачить: публічні + свої + ті де він член.
-        Анонім бачить тільки публічні.
-        """
         user = self.request.user
         if user.is_authenticated:
-            return Collection.objects.filter(
-                is_public=True
-            ).union(
-                Collection.objects.filter(owner=user)
-            ).union(
-                Collection.objects.filter(members__user=user)
-            ).order_by('-created_at')
-        return Collection.objects.filter(is_public=True)
+            return (
+                Collection.objects
+                .filter(
+                    Q(is_public=True) |
+                    Q(owner=user) |
+                    Q(members__user=user)
+                )
+                .distinct()
+                .order_by('-created_at')
+            )
+        return Collection.objects.filter(is_public=True).order_by('-created_at')
 
     def get_serializer_class(self):
         """Деталі — повний серіалайзер з локаціями і членами."""
@@ -232,22 +231,21 @@ class CollectionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='export',
             permission_classes=[permissions.IsAuthenticatedOrReadOnly])
     def export(self, request, pk=None):
-        """
-        Експортує колекцію як GeoJSON FeatureCollection.
-        GET /api/geo_collections/{id}/export/
-        """
         from locations.serializers import LocationGeoSerializer
 
         collection = self.get_object()
         locations = collection.locations.filter(is_public=True)
         geo_serializer = LocationGeoSerializer(locations, many=True)
 
+        # geo_serializer.data — це вже FeatureCollection dict
+        feature_collection = geo_serializer.data
+
         return Response({
-            'type': 'FeatureCollection',
+            'type': feature_collection.get('type', 'FeatureCollection'),
             'collection': {
                 'id': collection.id,
                 'name': collection.name,
                 'description': collection.description,
             },
-            'features': geo_serializer.data.get('features', []),
+            'features': feature_collection.get('features', []),
         })

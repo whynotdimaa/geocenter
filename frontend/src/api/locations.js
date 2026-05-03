@@ -2,7 +2,7 @@ import api from './axios'
 
 export const locationsApi = {
   // Список локацій (з фільтрами)
-  list: (params) => api.get('/locations/', { params }),
+  list: (params, signal) => api.get('/locations/', { params, signal }),
 
   // Деталі однієї локації
   get: (id) => api.get(`/locations/${id}/`),

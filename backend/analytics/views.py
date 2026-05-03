@@ -13,7 +13,8 @@ from .serializers import (
     UserStatsSerializer, HeatmapPointSerializer,
     ClusterSerializer, DistanceSerializer,
 )
-
+from django.contrib.gis.geos import Polygon
+from django.db.models import Count
 User = get_user_model()
 
 
@@ -30,18 +31,21 @@ class StatsView(APIView):
         locations = Location.objects.filter(owner=user)
         last_30 = timezone.now() - timedelta(days=30)
 
-        # Найпопулярніша локація (за кількістю переглядів)
+        # Найпопулярніша за кількістю переглядів — правильна логіка
         most_viewed = None
-        top = locations.order_by('-views__viewed_at').first()
+        top = (
+            locations
+            .annotate(view_count=Count('views'))
+            .order_by('-view_count')
+            .first()
+        )
         if top:
             most_viewed = {
                 'id': top.id,
                 'title': top.title,
-                'views': top.views.count()
+                'views': top.view_count,
             }
 
-        # Локації по категоріях
-        from django.db.models import Count
         by_category = (
             locations
             .values('category__name')
@@ -88,7 +92,8 @@ class HeatmapView(APIView):
         if bbox:
             try:
                 min_lat, min_lng, max_lat, max_lng = map(float, bbox.split(','))
-                qs = qs.filter(point__within_bbox=(min_lng, min_lat, max_lng, max_lat))
+                bbox_poly = Polygon.from_bbox((min_lng, min_lat, max_lng, max_lat))
+                qs = qs.filter(point__within=bbox_poly)
             except (ValueError, TypeError):
                 return Response(
                     {'error': 'bbox має бути у форматі: min_lat,min_lng,max_lat,max_lng'},
@@ -225,19 +230,17 @@ class DistanceView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        point_a = Point(lng1, lat1, srid=4326)
-        point_b = Point(lng2, lat2, srid=4326)
-
-        # Трансформуємо в метричну проекцію для точного підрахунку
-        point_a.transform(3857)
-        point_b.transform(3857)
-        distance_m = point_a.distance(point_b)
+        try:
+            from geopy.distance import geodesic
+            distance = geodesic((lat1, lng1), (lat2, lng2))
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'point_a': {'lat': lat1, 'lng': lng1},
             'point_b': {'lat': lat2, 'lng': lng2},
-            'distance_km': round(distance_m / 1000, 4),
-            'distance_m': round(distance_m, 2),
+            'distance_km': round(distance.km, 4),
+            'distance_m': round(distance.m, 2),
         })
 
 

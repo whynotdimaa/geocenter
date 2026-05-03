@@ -13,12 +13,12 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
 
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django.db.models import Q
 from .models import Location, Category, Tag
 from .serializers import LocationSerializer, LocationGeoSerializer, CategorySerializer, TagSerializer
 from .filters import LocationFilter
 from .permissions import IsOwnerOrReadOnly
-
+from django.contrib.gis.geos import Polygon
 
 class LocationViewSet(viewsets.ModelViewSet):
     """
@@ -42,19 +42,24 @@ class LocationViewSet(viewsets.ModelViewSet):
     ordering_fields = ('created_at', 'title')
     ordering = ('-created_at',)
 
+
     def get_queryset(self):
-        """
-        Авторизовані бачать публічні + свої приватні.
-        Анонімні бачать тільки публічні.
-        """
         user = self.request.user
         if user.is_authenticated:
-            return Location.objects.filter(
-                is_public=True
-            ).union(
-                Location.objects.filter(owner=user)
-            ).order_by('-created_at')
-        return Location.objects.filter(is_public=True)
+            return (
+                Location.objects
+                .filter(Q(is_public=True) | Q(owner=user))
+                .select_related('owner', 'category')
+                .prefetch_related('tags')
+                .order_by('-created_at')
+            )
+        return (
+            Location.objects
+            .filter(is_public=True)
+            .select_related('owner', 'category')
+            .prefetch_related('tags')
+            .order_by('-created_at')
+        )
 
     def perform_create(self, serializer):
         """Автоматично встановлює власника при створенні."""
@@ -96,12 +101,6 @@ class LocationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='bbox')
     def bbox(self, request):
-        """
-        Пошук локацій у прямокутній зоні (bounding box).
-        Параметри: min_lat, min_lng, max_lat, max_lng
-
-        Приклад: /api/locations/bbox/?min_lat=50.0&min_lng=30.0&max_lat=51.0&max_lng=31.0
-        """
         try:
             min_lat = float(request.query_params['min_lat'])
             min_lng = float(request.query_params['min_lng'])
@@ -113,10 +112,12 @@ class LocationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        bbox_poly = Polygon.from_bbox((min_lng, min_lat, max_lng, max_lat))
         qs = Location.objects.filter(
             is_public=True,
-            point__within_bbox=(min_lng, min_lat, max_lng, max_lat)
-        )
+            point__within=bbox_poly
+        ).select_related('owner', 'category').prefetch_related('tags')
+
         serializer = self.get_serializer(qs, many=True)
         return Response({'count': qs.count(), 'results': serializer.data})
 
