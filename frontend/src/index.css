@@ -1,0 +1,47 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --sidebar-width: 320px;
+  --color-bg: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-border: #e2e0d8;
+  --color-text: #1a1a18;
+  --color-text-muted: #6b6b64;
+  --color-primary: #2d6a4f;
+  --color-primary-hover: #1b4332;
+  --color-danger: #c0392b;
+  --font: 'Inter', system-ui, sans-serif;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* Leaflet fix — карта повинна бути під модалками */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.leaflet-top, .leaflet-bottom {
+  z-index: 10;
+}

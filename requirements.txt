@@ -1,7 +1,31 @@
-Django>=4.2
-djangorestframework>=3.14.0
-djangorestframework-simplejwt>=5.2.2
-djangorestframework-gis>=1.0
-psycopg2-binary>=2.9.6
-django-cors-headers>=4.0.0
-drf-spectacular>=0.26.0
+# Django core
+Django==5.0.6
+djangorestframework==3.15.2
+
+# GeoDjango / PostGIS
+djangorestframework-gis==1.0
+
+# JWT авторизація
+djangorestframework-simplejwt==5.3.1
+
+# OpenAPI / Swagger документація
+drf-spectacular==0.27.2
+
+# Фільтрація
+django-filter==24.2
+
+# CORS
+django-cors-headers==4.4.0
+
+# PostgreSQL драйвер
+psycopg2-binary==2.9.9
+
+# Змінні середовища
+python-dotenv==1.0.1
+
+# Обробка зображень (для avatar, cover_image)
+Pillow==10.4.0
+
+# K-Means кластеризація (analytics/)
+scikit-learn==1.5.1
+numpy==1.26.4
