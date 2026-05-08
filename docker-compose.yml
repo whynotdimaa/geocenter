@@ -1,0 +1,147 @@
+services:
+
+  # ── Databases ────────────────────────────────────────────────────────────
+
+  db_auth:
+    image: postgres:16-alpine
+    container_name: geocenter_db_auth
+    environment:
+      POSTGRES_DB: geocenter_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123"
+    volumes:
+      - db_auth_data:/var/lib/postgresql/data
+    networks:
+      - geocenter_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d geocenter_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db_geo:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: geocenter_db_geo
+    environment:
+      POSTGRES_DB: geocenter_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123"
+    volumes:
+      - db_geo_data:/var/lib/postgresql/data
+    networks:
+      - geocenter_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d geocenter_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db_analytics:
+    image: postgres:16-alpine
+    container_name: geocenter_db_analytics
+    environment:
+      POSTGRES_DB: geocenter_analytics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123"
+    volumes:
+      - db_analytics_data:/var/lib/postgresql/data
+    networks:
+      - geocenter_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d geocenter_analytics"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Microservices ─────────────────────────────────────────────────────────
+
+  auth_service:
+    build: ./auth_service
+    container_name: geocenter_auth
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:123@db_auth:5432/geocenter_auth
+      SECRET_KEY: super-secret-key-change-in-production
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+    depends_on:
+      db_auth:
+        condition: service_healthy
+    networks:
+      - geocenter_net
+    restart: unless-stopped
+
+  locations_service:
+    build: ./backend
+    container_name: geocenter_locations
+    environment:
+      DATABASE_URL: postgresql://postgres:123@db_geo:5432/geocenter_db
+      SECRET_KEY: super-secret-key-change-in-production
+      DJANGO_SECRET_KEY: super-secret-key-change-in-production
+      DEBUG: "False"
+      DJANGO_SETTINGS_MODULE: config.settings
+      AUTH_SERVICE_URL: http://auth_service:8001
+    depends_on:
+      db_geo:
+        condition: service_healthy
+    volumes:
+      - media_data:/app/media
+    networks:
+      - geocenter_net
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"
+
+  analytics_service:
+    build: ./analytics_service
+    container_name: geocenter_analytics
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:123@db_analytics:5432/geocenter_analytics
+      LOCATIONS_SERVICE_URL: http://locations_service:8000
+      AUTH_SERVICE_URL: http://auth_service:8001
+      SECRET_KEY: super-secret-key-change-in-production
+    depends_on:
+      db_analytics:
+        condition: service_healthy
+    networks:
+      - geocenter_net
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: geocenter_frontend
+    networks:
+      - geocenter_net
+    restart: unless-stopped
+
+  # ── API Gateway ───────────────────────────────────────────────────────────
+
+  nginx:
+    image: nginx:alpine
+    container_name: geocenter_gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - media_data:/media:ro
+    depends_on:
+      - auth_service
+      - locations_service
+      - analytics_service
+      - frontend
+    networks:
+      - geocenter_net
+    restart: unless-stopped
+
+# ── Volumes & Networks ────────────────────────────────────────────────────
+
+volumes:
+  db_auth_data:
+  db_geo_data:
+  db_analytics_data:
+  media_data:
+
+networks:
+  geocenter_net:
+    driver: bridge
