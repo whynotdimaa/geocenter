@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import useAuthStore from '../store/authStore'
 import styles from './AuthPage.module.css'
 
 export default function RegisterPage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState({ username: '', email: '', password: '', password2: '' })
   const { register, loading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
@@ -24,7 +26,7 @@ export default function RegisterPage() {
           <span className={styles.logoText}>GeoCenter</span>
         </div>
 
-        <h1 className={styles.title}>Реєстрація</h1>
+        <h1 className={styles.title}>{t('auth.register_title')}</h1>
 
         {error && (
           <div className={styles.error} onClick={clearError}>{error}</div>
@@ -32,34 +34,33 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Імʼя користувача</label>
+            <label className={styles.label}>{t('auth.username')}</label>
             <input className={styles.input} name="username" value={form.username}
               onChange={handleChange} placeholder="username" required />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Email</label>
+            <label className={styles.label}>{t('auth.email')}</label>
             <input className={styles.input} type="email" name="email" value={form.email}
               onChange={handleChange} placeholder="your@email.com" required />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Пароль</label>
+            <label className={styles.label}>{t('auth.password')}</label>
             <input className={styles.input} type="password" name="password" value={form.password}
               onChange={handleChange} placeholder="мін. 8 символів" required />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Підтвердження пароля</label>
+            <label className={styles.label}>{t('profile.confirm_password')}</label>
             <input className={styles.input} type="password" name="password2" value={form.password2}
               onChange={handleChange} placeholder="повтори пароль" required />
           </div>
 
           <button className={styles.btn} type="submit" disabled={loading}>
-            {loading ? 'Реєструємось...' : 'Зареєструватись'}
+            {loading ? t('auth.registering') : t('auth.register_btn')}
           </button>
         </form>
 
         <p className={styles.footer}>
-          Вже є акаунт?{' '}
-          <Link to="/login" className={styles.link}>Увійти</Link>
+          <Link to="/login" className={styles.link}>{t('auth.has_account')}</Link>
         </p>
       </div>
     </div>

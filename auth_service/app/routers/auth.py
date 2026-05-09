@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from datetime import datetime, timedelta, timezone
 
 from app.database import get_db
@@ -46,6 +46,13 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     profile = UserProfile(user_id=user.id)
     db.add(profile)
 
+    # Інвалідуємо старі refresh токени цього юзера (щоб уникнути дублікатів)
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == user.id, RefreshToken.is_revoked == False)
+        .values(is_revoked=True)
+    )
+
     # Генеруємо токени
     access = create_access_token({"sub": str(user.id)})
     refresh = create_refresh_token({"sub": str(user.id)})
@@ -74,6 +81,13 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Акаунт деактивовано")
+
+    # Інвалідуємо старі refresh токени цього юзера
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == user.id, RefreshToken.is_revoked == False)
+        .values(is_revoked=True)
+    )
 
     access = create_access_token({"sub": str(user.id)})
     refresh = create_refresh_token({"sub": str(user.id)})

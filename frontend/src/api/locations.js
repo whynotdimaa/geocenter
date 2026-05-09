@@ -35,6 +35,21 @@ export const locationsApi = {
 
   // Теги
   tags: () => api.get('/locations/tags/'),
+
+  // Reverse geocoding через Nominatim (OpenStreetMap)
+  reverseGeocode: async (lat, lng) => {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=uk`
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'GeoCenter/1.0' }
+    })
+    if (!response.ok) throw new Error('Geocoding failed')
+    return response.json()
+  },
+
+  // Коментарі до локації
+  getComments: (locationId) => api.get(`/locations/${locationId}/comments/`),
+  addComment: (locationId, text) => api.post(`/locations/${locationId}/comments/`, { text }),
+  deleteComment: (locationId, commentId) => api.delete(`/locations/${locationId}/comments/${commentId}/`),
 }
 
 export const analyticsApi = {

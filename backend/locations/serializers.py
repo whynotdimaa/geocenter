@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from django.contrib.gis.geos import Point
-from .models import Location, Category, Tag
+from .models import Location, Category, Tag, LocationComment
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -88,8 +88,20 @@ class LocationGeoSerializer(GeoFeatureModelSerializer):
     """
     owner = serializers.StringRelatedField(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Location
         geo_field = 'point'
-        fields = ('id', 'title', 'description', 'owner', 'tags', 'category', 'is_public', 'address', 'created_at')
+        fields = ('id', 'title', 'description', 'owner', 'tags', 'category', 'is_public', 'address', 'created_at', 'point')
+
+
+class LocationCommentSerializer(serializers.ModelSerializer):
+    """Серіалайзер для коментарів до локації."""
+    user = serializers.StringRelatedField(read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+
+    class Meta:
+        model = LocationComment
+        fields = ('id', 'text', 'user', 'user_id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'user', 'user_id', 'created_at', 'updated_at')

@@ -36,22 +36,19 @@ services:
       timeout: 3s
       retries: 5
 
-  db_analytics:
-    image: postgres:16-alpine
-    container_name: geocenter_db_analytics
-    environment:
-      POSTGRES_DB: geocenter_analytics
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123"
+  redis:
+    image: redis:7-alpine
+    container_name: geocenter_redis
     volumes:
-      - db_analytics_data:/var/lib/postgresql/data
+      - redis_data:/data
     networks:
       - geocenter_net
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d geocenter_analytics"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 3
 
   # ── Microservices ─────────────────────────────────────────────────────────
 
@@ -74,14 +71,20 @@ services:
     build: ./backend
     container_name: geocenter_locations
     environment:
-      DATABASE_URL: postgresql://postgres:123@db_geo:5432/geocenter_db
-      SECRET_KEY: super-secret-key-change-in-production
       DJANGO_SECRET_KEY: super-secret-key-change-in-production
-      DEBUG: "False"
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,nginx,geocenter_gateway,locations_service"
+      DB_NAME: geocenter_db
+      DB_USER: postgres
+      DB_PASSWORD: "123"
+      DB_HOST: db_geo
+      DB_PORT: "5432"
       AUTH_SERVICE_URL: http://auth_service:8001
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db_geo:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - media_data:/app/media
@@ -92,21 +95,6 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"
-
-  analytics_service:
-    build: ./analytics_service
-    container_name: geocenter_analytics
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:123@db_analytics:5432/geocenter_analytics
-      LOCATIONS_SERVICE_URL: http://locations_service:8000
-      AUTH_SERVICE_URL: http://auth_service:8001
-      SECRET_KEY: super-secret-key-change-in-production
-    depends_on:
-      db_analytics:
-        condition: service_healthy
-    networks:
-      - geocenter_net
-    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -128,7 +116,6 @@ services:
     depends_on:
       - auth_service
       - locations_service
-      - analytics_service
       - frontend
     networks:
       - geocenter_net
@@ -139,8 +126,8 @@ services:
 volumes:
   db_auth_data:
   db_geo_data:
-  db_analytics_data:
   media_data:
+  redis_data:
 
 networks:
   geocenter_net:

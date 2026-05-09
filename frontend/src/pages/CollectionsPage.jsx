@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { collectionsApi } from '../api/locations'
 import styles from './CollectionsPage.module.css'
 
 export default function CollectionsPage() {
+  const { t } = useTranslation()
   const [collections, setCollections] = useState([])
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -34,7 +36,7 @@ export default function CollectionsPage() {
   }
 
   const deleteCollection = async (id) => {
-    if (!confirm('Видалити колекцію?')) return
+    if (!confirm(t('collections.delete_confirm'))) return
     await collectionsApi.remove(id)
     fetchCollections()
   }
@@ -50,9 +52,9 @@ export default function CollectionsPage() {
       await collectionsApi.join(inviteToken)
       setInviteToken('')
       fetchCollections()
-      alert('Ви приєднались до колекції!')
+      alert(t('collections.joined_success'))
     } catch (err) {
-      alert(err.response?.data?.detail || 'Невірний токен')
+      alert(err.response?.data?.detail || t('collections.invalid_token'))
     }
   }
 
@@ -60,43 +62,43 @@ export default function CollectionsPage() {
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <Link to="/" className={styles.back}>← Карта</Link>
-          <h1 className={styles.title}>Колекції</h1>
+          <Link to="/" className={styles.back}>{t('profile.back_to_map')}</Link>
+          <h1 className={styles.title}>{t('collections.title')}</h1>
         </div>
 
         {/* Приєднатись за токеном */}
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Приєднатись за запрошенням</h2>
+          <h2 className={styles.cardTitle}>{t('collections.join_title')}</h2>
           <form onSubmit={joinByToken} className={styles.joinForm}>
             <input className={styles.input} value={inviteToken}
               onChange={(e) => setInviteToken(e.target.value)}
-              placeholder="Вставте токен-запрошення..." />
-            <button className={styles.btn} type="submit">Приєднатись</button>
+              placeholder={t('collections.join_placeholder')} />
+            <button className={styles.btn} type="submit">{t('collections.join_btn')}</button>
           </form>
         </div>
 
         {/* Створити колекцію */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Мої колекції</h2>
-            <button className={styles.addBtn} onClick={() => setCreating(true)}>+ Нова</button>
+            <h2 className={styles.cardTitle}>{t('collections.title')}</h2>
+            <button className={styles.addBtn} onClick={() => setCreating(true)}>{t('collections.new_btn')}</button>
           </div>
 
           {creating && (
             <form onSubmit={createCollection} className={styles.createForm}>
               <input className={styles.input} value={newName} autoFocus
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Назва колекції" required />
-              <button className={styles.btn} type="submit">Створити</button>
+                placeholder={t('collections.name_placeholder')} required />
+              <button className={styles.btn} type="submit">{t('collections.create_btn')}</button>
               <button className={styles.cancelBtn} type="button"
-                onClick={() => setCreating(false)}>Скасувати</button>
+                onClick={() => setCreating(false)}>{t('collections.cancel_btn')}</button>
             </form>
           )}
 
           {loading ? (
-            <p className={styles.empty}>Завантаження...</p>
+            <p className={styles.empty}>{t('collections.loading')}</p>
           ) : collections.length === 0 ? (
-            <p className={styles.empty}>У вас ще немає колекцій</p>
+            <p className={styles.empty}>{t('collections.empty_collections')}</p>
           ) : (
             <div className={styles.list}>
               {collections.map((col) => (
@@ -105,10 +107,10 @@ export default function CollectionsPage() {
                     <div className={styles.itemTop}>
                       <span className={styles.itemName}>{col.name}</span>
                       <span className={styles.itemRole}>{col.user_role}</span>
-                      {col.is_public && <span className={styles.publicBadge}>публічна</span>}
+                      {col.is_public && <span className={styles.publicBadge}>{t('collections.public_badge')}</span>}
                     </div>
                     <div className={styles.itemMeta}>
-                      {col.locations_count} локацій · {col.members_count} учасників
+                      {col.locations_count} {t('collections.locations_count')} · {col.members_count} {t('collections.members_count')}
                     </div>
                   </div>
                   <div className={styles.itemActions}>
@@ -133,12 +135,12 @@ export default function CollectionsPage() {
 
           {inviteLink && (
             <div className={styles.inviteLinkBox}>
-              <span className={styles.inviteLinkLabel}>Посилання-запрошення:</span>
+              <span className={styles.inviteLinkLabel}>{t('collections.invite_label')}</span>
               <input className={styles.inviteLinkInput} value={inviteLink} readOnly
                 onClick={(e) => e.target.select()} />
               <button className={styles.copyBtn}
                 onClick={() => { navigator.clipboard.writeText(inviteLink); setInviteLink(null) }}>
-                Копіювати
+                {t('collections.copy_btn')}
               </button>
             </div>
           )}

@@ -5,8 +5,9 @@ djangorestframework==3.15.2
 # GeoDjango / PostGIS
 djangorestframework-gis==1.0
 geopy==2.4.1
-# JWT авторизація
-djangorestframework-simplejwt==5.3.1
+
+# HTTP-клієнт для верифікації токенів через auth_service (RemoteJWTAuthentication)
+requests==2.32.3
 
 # OpenAPI / Swagger документація
 drf-spectacular==0.27.2
@@ -28,3 +29,8 @@ Pillow==10.4.0
 # K-Means кластеризація (analytics/)
 scikit-learn==1.5.1
 numpy==1.26.4
+gunicorn==22.0.0
+requests==2.32.3
+
+# Redis cache backend
+django-redis==5.4.0

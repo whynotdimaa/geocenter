@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import L from 'leaflet'
 import useAuthStore from '../store/authStore'
 import { locationsApi, analyticsApi } from '../api/locations'
@@ -93,6 +94,7 @@ const MAP_MODES = {
 }
 
 export default function MapPage() {
+  const { t } = useTranslation()
   // ✅ ВСІ useState і useEffect тільки всередині компонента
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
@@ -169,15 +171,29 @@ export default function MapPage() {
     } catch {}
   }
 
-  const handleMapClick = (latlng) => {
+  const handleMapClick = async (latlng) => {
     if (!user) return
-    setModal({ mode: 'create', latlng })
+    // Отримуємо адресу через reverse geocoding
+    let address = ''
+    try {
+      const geo = await locationsApi.reverseGeocode(latlng.lat, latlng.lng)
+      address = geo.display_name || ''
+    } catch {
+      // Якщо геокодування не вдалось — адреса залишиться порожньою
+    }
+    setModal({ mode: 'create', latlng, address })
   }
 
-  const handleSelectLocation = (loc) => {
+  const handleSelectLocation = async (loc) => {
     setSelected(loc)
     if (mapRef.current) {
       mapRef.current.setView([loc.lat, loc.lng], 15)
+    }
+    // Запит деталей локації — логує перегляд на бекенді
+    try {
+      await locationsApi.get(loc.id)
+    } catch {
+      // ігноруємо помилки — перегляд все одно залоговано
     }
   }
 
@@ -187,7 +203,7 @@ export default function MapPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Видалити локацію?')) return
+    if (!confirm(t('map.delete_confirm'))) return
     await locationsApi.remove(id)
     setSelected(null)
     fetchLocations(new AbortController().signal)
@@ -213,8 +229,9 @@ export default function MapPage() {
             >
               +
             </button>
-            <Link to="/collections" className={styles.iconBtn} title="Колекції">☰</Link>
-            <Link to="/profile" className={styles.iconBtn} title="Профіль">◉</Link>
+            <Link to="/collections" className={styles.iconBtn} title={t('map.collections')}>☰</Link>
+            <Link to="/profile" className={styles.iconBtn} title={t('map.settings')}>◉</Link>
+            <Link to="/analytics" className={styles.iconBtn} title="Аналітика">◎</Link>
           </div>
         </div>
 
@@ -292,7 +309,7 @@ export default function MapPage() {
 
         <div className={styles.sidebarFooter}>
           <span className={styles.footerUser}>{user?.email}</span>
-          <button className={styles.logoutBtn} onClick={logout}>Вийти</button>
+          <button className={styles.logoutBtn} onClick={logout}>{t('profile.logout')}</button>
         </div>
       </aside>
 
@@ -366,6 +383,7 @@ export default function MapPage() {
           mode={modal.mode}
           latlng={modal.latlng}
           location={modal.location}
+          address={modal.address}
           categories={categories}
           onSave={handleSaved}
           onClose={() => setModal(null)}

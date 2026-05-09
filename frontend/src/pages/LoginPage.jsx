@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import useAuthStore from '../store/authStore'
 import styles from './AuthPage.module.css'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { login, loading, error, clearError } = useAuthStore()
@@ -25,7 +27,7 @@ export default function LoginPage() {
           <span className={styles.logoText}>GeoCenter</span>
         </div>
 
-        <h1 className={styles.title}>Вхід</h1>
+        <h1 className={styles.title}>{t('auth.login_title')}</h1>
 
         {error && (
           <div className={styles.error} onClick={clearError}>
@@ -35,7 +37,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Email</label>
+            <label className={styles.label}>{t('auth.email')}</label>
             <input
               className={styles.input}
               type="email"
@@ -48,7 +50,7 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Пароль</label>
+            <label className={styles.label}>{t('auth.password')}</label>
             <input
               className={styles.input}
               type="password"
@@ -60,14 +62,13 @@ export default function LoginPage() {
           </div>
 
           <button className={styles.btn} type="submit" disabled={loading}>
-            {loading ? 'Входимо...' : 'Увійти'}
+            {loading ? t('auth.logging_in') : t('auth.login_btn')}
           </button>
         </form>
 
         <p className={styles.footer}>
-          Немає акаунту?{' '}
           <Link to="/register" className={styles.link}>
-            Зареєструватись
+            {t('auth.no_account')}
           </Link>
         </p>
       </div>

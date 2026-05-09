@@ -26,9 +26,9 @@ api.interceptors.response.use(
 
       if (refresh) {
         try {
-          const { data } = await axios.post('/api/auth/refresh/', { refresh })
-          localStorage.setItem('access_token', data.access)
-          original.headers.Authorization = `Bearer ${data.access}`
+          const { data } = await axios.post('/api/auth/refresh', { refresh_token: refresh })
+          localStorage.setItem('access_token', data.access_token)
+          original.headers.Authorization = `Bearer ${data.access_token}`
           return api(original)
         } catch {
           // refresh теж протух — розлогінюємо

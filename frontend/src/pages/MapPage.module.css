@@ -260,3 +260,78 @@
   display: inline-block;
   flex-shrink: 0;
 }
+
+/* ── Mobile Responsive ── */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .sidebarHeader {
+    padding: 10px 12px;
+  }
+
+  .logoText {
+    font-size: 14px;
+  }
+
+  .headerActions {
+    gap: 4px;
+  }
+
+  .addBtn, .iconBtn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .searchWrap {
+    padding: 8px 12px;
+  }
+
+  .categories {
+    padding: 8px 12px;
+  }
+
+  .mapWrap {
+    flex: 1;
+    min-height: 55vh;
+  }
+
+  .sidebarFooter {
+    padding: 8px 12px;
+  }
+
+  .footerUser {
+    max-width: 140px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    max-height: 50vh;
+  }
+
+  .catBtn {
+    padding: 3px 8px;
+    font-size: 9px;
+  }
+
+  .searchInput {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+
+  .count {
+    padding: 6px 12px;
+    font-size: 9px;
+  }
+}

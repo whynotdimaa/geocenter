@@ -6,7 +6,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('users.urls')),
+    # api/auth/* та api/users/* → FastAPI auth_service (через nginx)
     path('api/locations/', include('locations.urls')),
     path('api/collections/', include('geo_collections.urls')),
     path('api/analytics/', include('analytics.urls')),

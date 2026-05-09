@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.models import User, UserProfile
-from app.schemas import UserResponse, UpdateProfileRequest, ChangePasswordRequest, InternalUserResponse
+from app.schemas import UserResponse, UpdateProfileRequest, ChangePasswordRequest, InternalUserResponse, UserProfileSchema
 from app.security import get_current_user_id, hash_password, verify_password
 
 router = APIRouter()
@@ -37,7 +37,7 @@ async def get_me(
 
     response = UserResponse.model_validate(user)
     if profile:
-        response.profile = profile
+        response.profile = UserProfileSchema.model_validate(profile)
     return response
 
 
@@ -87,7 +87,7 @@ async def update_me(
     profile = await get_profile(user_id, db)
     response = UserResponse.model_validate(user)
     if profile:
-        response.profile = profile
+        response.profile = UserProfileSchema.model_validate(profile)
     return response
 
 

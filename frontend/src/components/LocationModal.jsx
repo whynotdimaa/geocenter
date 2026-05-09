@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { locationsApi } from '../api/locations'
+import { useTranslation } from 'react-i18next'
 import styles from './LocationModal.module.css'
 
-export default function LocationModal({ mode, latlng, location, categories, onSave, onClose }) {
+export default function LocationModal({ mode, latlng, location, address: prefilledAddress, categories, onSave, onClose }) {
+  const { t } = useTranslation()
   const isEdit = mode === 'edit'
 
   const [form, setForm] = useState({
@@ -35,6 +37,7 @@ export default function LocationModal({ mode, latlng, location, categories, onSa
         ...f,
         latitude: latlng.lat.toFixed(6),
         longitude: latlng.lng.toFixed(6),
+        address: prefilledAddress || '',
       }))
     }
   }, [])
@@ -69,7 +72,7 @@ export default function LocationModal({ mode, latlng, location, categories, onSa
       onSave()
     } catch (err) {
       const data = err.response?.data
-      setError(data ? Object.values(data).flat().join(' ') : 'Помилка збереження')
+      setError(data ? Object.values(data).flat().join(' ') : t('profile.msg_save_error'))
     } finally {
       setLoading(false)
     }
@@ -80,7 +83,7 @@ export default function LocationModal({ mode, latlng, location, categories, onSa
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {isEdit ? 'Редагувати локацію' : 'Нова локація'}
+            {isEdit ? t('locations.edit_title') : t('locations.new_title')}
           </h2>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
@@ -90,20 +93,20 @@ export default function LocationModal({ mode, latlng, location, categories, onSa
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.row}>
             <div className={styles.field}>
-              <label className={styles.label}>Назва *</label>
+              <label className={styles.label}>{t('locations.name')}</label>
               <input className={styles.input} name="title" value={form.title}
-                onChange={handleChange} placeholder="Назва точки" required />
+                onChange={handleChange} placeholder={t('locations.name')} required />
             </div>
           </div>
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label className={styles.label}>Широта *</label>
+              <label className={styles.label}>{t('locations.latitude')}</label>
               <input className={styles.input} name="latitude" value={form.latitude}
                 onChange={handleChange} placeholder="50.4501" required type="number" step="any" />
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Довгота *</label>
+              <label className={styles.label}>{t('locations.longitude')}</label>
               <input className={styles.input} name="longitude" value={form.longitude}
                 onChange={handleChange} placeholder="30.5234" required type="number" step="any" />
             </div>
@@ -111,48 +114,48 @@ export default function LocationModal({ mode, latlng, location, categories, onSa
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label className={styles.label}>Категорія</label>
+              <label className={styles.label}>{t('locations.category')}</label>
               <select className={styles.input} name="category_id" value={form.category_id}
                 onChange={handleChange}>
-                <option value="">— без категорії —</option>
+                <option value="">{t('locations.no_category')}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Висота (м)</label>
+              <label className={styles.label}>{t('locations.altitude')}</label>
               <input className={styles.input} name="altitude" value={form.altitude}
-                onChange={handleChange} placeholder="необов'язково" type="number" step="any" />
+                onChange={handleChange} placeholder={t('locations.optional')} type="number" step="any" />
             </div>
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Адреса</label>
+            <label className={styles.label}>{t('locations.address')}</label>
             <input className={styles.input} name="address" value={form.address}
               onChange={handleChange} placeholder="вул. Хрещатик, 1, Київ" />
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Опис</label>
+            <label className={styles.label}>{t('locations.description')}</label>
             <textarea className={styles.textarea} name="description" value={form.description}
-              onChange={handleChange} placeholder="Детальний опис локації..." rows={3} />
+              onChange={handleChange} placeholder={t('locations.desc_placeholder')} rows={3} />
           </div>
 
           <div className={styles.checkboxRow}>
             <input type="checkbox" id="is_public" name="is_public"
               checked={form.is_public} onChange={handleChange} />
             <label htmlFor="is_public" className={styles.checkboxLabel}>
-              Публічна (видима всім)
+              {t('locations.is_public')}
             </label>
           </div>
 
           <div className={styles.actions}>
             <button type="button" className={styles.cancelBtn} onClick={onClose}>
-              Скасувати
+              {t('locations.cancel_btn')}
             </button>
             <button type="submit" className={styles.saveBtn} disabled={loading}>
-              {loading ? 'Зберігаємо...' : isEdit ? 'Зберегти' : 'Додати'}
+              {loading ? t('profile.saving') : isEdit ? t('locations.save_btn') : t('locations.add_btn')}
             </button>
           </div>
         </form>

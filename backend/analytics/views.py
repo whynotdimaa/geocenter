@@ -21,30 +21,21 @@ User = get_user_model()
 class StatsView(APIView):
     """
     GET /api/analytics/stats/
-    Повертає статистику по поточному авторизованому користувачу:
-    загальна кількість локацій, колекцій, переглядів, найпопулярніша локація тощо.
+    Повертає статистику: персональну (поточний користувач) та глобальну (всі публічні локації).
     """
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         user = request.user
-        locations = Location.objects.filter(owner=user)
         last_30 = timezone.now() - timedelta(days=30)
 
-        # Найпопулярніша за кількістю переглядів — правильна логіка
+        # ── Персональна статистика ─────────────────────────────────────────
+        locations = Location.objects.filter(owner=user)
+
         most_viewed = None
-        top = (
-            locations
-            .annotate(view_count=Count('views'))
-            .order_by('-view_count')
-            .first()
-        )
+        top = locations.annotate(view_count=Count('views')).order_by('-view_count').first()
         if top:
-            most_viewed = {
-                'id': top.id,
-                'title': top.title,
-                'views': top.view_count,
-            }
+            most_viewed = {'id': top.id, 'title': top.title, 'views': top.view_count}
 
         by_category = (
             locations
@@ -53,7 +44,7 @@ class StatsView(APIView):
             .order_by('-count')
         )
 
-        data = {
+        personal = {
             'total_locations': locations.count(),
             'public_locations': locations.filter(is_public=True).count(),
             'private_locations': locations.filter(is_public=False).count(),
@@ -64,8 +55,38 @@ class StatsView(APIView):
             'locations_last_30_days': locations.filter(created_at__gte=last_30).count(),
         }
 
-        serializer = UserStatsSerializer(data)
-        return Response(serializer.data)
+        # ── Глобальна статистика (всі публічні локації) ──────────────────────
+        global_locations = Location.objects.filter(is_public=True)
+
+        global_most_viewed = None
+        global_top = global_locations.annotate(view_count=Count('views')).order_by('-view_count').first()
+        if global_top:
+            global_most_viewed = {
+                'id': global_top.id,
+                'title': global_top.title,
+                'views': global_top.view_count,
+            }
+
+        global_by_category = (
+            global_locations
+            .values('category__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        global_stats = {
+            'total_locations': global_locations.count(),
+            'total_views': LocationView.objects.count(),
+            'unique_users': Location.objects.values('owner').distinct().count(),
+            'most_viewed_location': global_most_viewed,
+            'locations_by_category': list(global_by_category),
+            'locations_last_30_days': global_locations.filter(created_at__gte=last_30).count(),
+        }
+
+        return Response({
+            'personal': personal,
+            'global': global_stats,
+        })
 
 
 class HeatmapView(APIView):
