@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django.db import transaction
 
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
@@ -22,6 +23,7 @@ from .models import Location, Category, Tag, LocationComment
 from .serializers import LocationSerializer, LocationGeoSerializer, CategorySerializer, TagSerializer, LocationCommentSerializer
 from .filters import LocationFilter
 from .permissions import IsOwnerOrReadOnly
+from .outbox import OutboxPublisher
 
 from analytics.views import TrackViewMixin
 
@@ -54,7 +56,10 @@ class LocationViewSet(TrackViewMixin, viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        """Створення локації з публікацією події в outbox (транзакційно)."""
+        with transaction.atomic():
+            location = serializer.save(owner=self.request.user)
+            OutboxPublisher.publish_location_created(location)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -129,11 +134,19 @@ class LocationViewSet(TrackViewMixin, viewsets.ModelViewSet):
         cache.delete_pattern('*:geocenter:*:geojson_*')
 
     def perform_update(self, serializer):
-        serializer.save()
+        """Оновлення локації з публікацією події в outbox (транзакційно)."""
+        with transaction.atomic():
+            location = serializer.save()
+            OutboxPublisher.publish_location_updated(location)
         self._clear_locations_cache()
 
     def perform_destroy(self, instance):
-        instance.soft_delete()
+        """Soft delete з публікацією події в outbox (транзакційно)."""
+        with transaction.atomic():
+            owner_id = instance.owner_id
+            location_id = instance.id
+            instance.soft_delete()
+            OutboxPublisher.publish_location_deleted(location_id, owner_id)
         self._clear_locations_cache()
 
     @action(detail=True, methods=['post'], url_path='restore',

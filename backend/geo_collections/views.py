@@ -126,7 +126,7 @@ class CollectionViewSet(viewsets.ModelViewSet):
         """
         collection = self.get_object()
         invite_url = request.build_absolute_uri(
-            f'/api/geo_collections/join/?token={collection.invite_token}'
+            f'/api/collections/join/?token={collection.invite_token}'
         )
         return Response({
             'invite_url': invite_url,

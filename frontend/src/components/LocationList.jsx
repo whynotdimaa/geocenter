@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import LocationComments from './LocationComments'
+import AddToCollection from './AddToCollection'
 import styles from './LocationList.module.css'
 
 export default function LocationList({ locations, selected, onSelect, onEdit, onDelete, currentUser }) {
@@ -50,16 +51,16 @@ export default function LocationList({ locations, selected, onSelect, onEdit, on
                   <span>{loc.lat?.toFixed(4)}, {loc.lng?.toFixed(4)}</span>
                   {!loc.is_public && <span className={styles.private}>{t('locations.private')}</span>}
                 </div>
-                {/* Кнопка коментарів */}
-                <button
-                  className={styles.commentsBtn}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCommentsModal({ isOpen: true, location: loc })
-                  }}
-                >
-                  💬 Коментарі
-                </button>
+                {/* Кнопки дій */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className={styles.commentsBtn}
+                    onClick={() => setCommentsModal({ isOpen: true, location: loc })}
+                  >
+                    💬 Коментарі
+                  </button>
+                  {currentUser && <AddToCollection locationId={loc.id} />}
+                </div>
               </div>
 
               {isOwner && isSelected && (

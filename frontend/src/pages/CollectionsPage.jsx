@@ -48,8 +48,11 @@ export default function CollectionsPage() {
 
   const joinByToken = async (e) => {
     e.preventDefault()
+    // Витягуємо UUID з рядка (або повного URL, або просто токену)
+    const uuidMatch = inviteToken.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
+    const token = uuidMatch ? uuidMatch[0] : inviteToken.trim()
     try {
-      await collectionsApi.join(inviteToken)
+      await collectionsApi.join(token)
       setInviteToken('')
       fetchCollections()
       alert(t('collections.joined_success'))

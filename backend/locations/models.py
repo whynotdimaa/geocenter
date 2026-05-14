@@ -1,6 +1,9 @@
 from django.contrib.gis.db import models
 from django.conf import settings
 
+# Import OutboxEvent to register with Django
+from .outbox import OutboxEvent, OutboxPublisher
+
 
 class Category(models.Model):
     """Категорія для групування локацій (наприклад: Природа, Інфраструктура, Небезпека)."""
@@ -140,3 +143,7 @@ class LocationComment(models.Model):
 
     def __str__(self):
         return f'{self.user.email}: {self.text[:50]}'
+
+
+# Import OutboxEvent після визначення всіх моделей
+from .outbox import OutboxEvent, OutboxPublisher
